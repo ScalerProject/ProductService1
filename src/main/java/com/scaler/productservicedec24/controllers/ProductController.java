@@ -1,6 +1,7 @@
 package com.scaler.productservicedec24.controllers;
 
 import com.scaler.productservicedec24.models.Product;
+import com.scaler.productservicedec24.services.ProductService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -9,9 +10,15 @@ import java.util.List;
 @RequestMapping("/products")
 public class ProductController {
 
+    ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+
     @GetMapping("/{id}")
     public Product getSingleProduct(@PathVariable("id") Long productId) {
-        return new Product();
+        return productService.getSingleProduct(productId);
     }
 
     @GetMapping()
