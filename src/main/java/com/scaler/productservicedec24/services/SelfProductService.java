@@ -1,14 +1,30 @@
 package com.scaler.productservicedec24.services;
 
+import com.scaler.productservicedec24.exceptions.ProductNotFoundException;
 import com.scaler.productservicedec24.models.Product;
+import com.scaler.productservicedec24.repositories.ProductRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
+@Service("selfProductService")
 public class SelfProductService implements ProductService{
-    public List<Product> getAllProducts(){
-        return null;
+    private final ProductRepository productRepository;
+
+    public SelfProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
+
     public Product getSingleProduct(Long id){
+        Optional<Product> optionalProduct = productRepository.findById(id);
+        if(optionalProduct.isEmpty()){
+            throw new ProductNotFoundException("Product not found", id);
+        }
+        return optionalProduct.get();
+    }
+
+    public List<Product> getAllProducts(){
         return null;
     }
     public Product createProduct(Product product){
