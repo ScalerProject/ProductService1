@@ -1,5 +1,6 @@
 package com.scaler.productservicedec24.models;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
@@ -13,7 +14,7 @@ public class Product extends BaseModal{
     private String description;
     private Double price;
     private String imageUrl;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private Category category;
 
     public String getTitle() {

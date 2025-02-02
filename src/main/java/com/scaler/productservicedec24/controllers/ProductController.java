@@ -48,12 +48,18 @@ public class ProductController {
 
     @GetMapping()
     public ResponseEntity<List<Product>> getAllProducts() {
-        return new ResponseEntity<>(productService.getAllProducts(), HttpStatus.OK);
+        return new ResponseEntity<>(
+                productService.getAllProducts(),
+                HttpStatus.OK
+        );
     }
 
     @PostMapping
-    public Product createProduct() {
-        return new Product();
+    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+        return new ResponseEntity<>(
+                productService.createProduct(product),
+                HttpStatus.OK
+        );
     }
 
     @DeleteMapping("/{id}")
