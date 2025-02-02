@@ -23,7 +23,7 @@ public class ProductController {
 
     @GetMapping()
     public List<Product> getAllProducts() {
-        return null;
+        return productService.getAllProducts();
     }
 
     @PostMapping

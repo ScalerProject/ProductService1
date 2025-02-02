@@ -6,21 +6,38 @@ import com.scaler.productservicedec24.models.Product;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class FakeStoreProductService implements ProductService{
-    @Override
-    public List<Product> getAllProducts(){
-        return null;
+    RestTemplate restTemplate;
+    public FakeStoreProductService(RestTemplate restTemplate){
+        this.restTemplate = restTemplate;
     }
 
+    @Override
     public Product getSingleProduct(Long productId){
-        RestTemplate restTemplate = new RestTemplate();
         FakeStoreProductDto fakeStoreProductDto =
                 restTemplate.getForObject("https://fakestoreapi.com/products/" + productId, FakeStoreProductDto.class);
         return convertFakeStoreProductDtoToProduct(fakeStoreProductDto);
     }
+
+    @Override
+    public List<Product> getAllProducts(){
+////      We can't use this because of type erasures of Generics
+//        List<FakeStoreProductDto> fakeStoreProductDtos = restTemplate
+//                .getForObject("https://fakestoreapi.com/products", List<FakeStoreProductDto>.class);
+
+        FakeStoreProductDto[] fakeStoreProductDtos =
+                restTemplate.getForObject("https://fakestoreapi.com/products", FakeStoreProductDto[].class);
+        List<Product> products = new ArrayList<>();
+        for(FakeStoreProductDto fakeStoreProductDto : fakeStoreProductDtos){
+            products.add(convertFakeStoreProductDtoToProduct(fakeStoreProductDto));
+        }
+        return products;
+    }
+
     public Product createProduct(Product product){
         return null;
     }
