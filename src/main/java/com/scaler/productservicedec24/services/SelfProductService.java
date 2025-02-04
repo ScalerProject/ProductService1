@@ -6,6 +6,9 @@ import com.scaler.productservicedec24.models.Product;
 import com.scaler.productservicedec24.repositories.CategoryRepository;
 import com.scaler.productservicedec24.repositories.ProductRepository;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.swing.text.html.Option;
@@ -23,6 +26,7 @@ public class SelfProductService implements ProductService{
         this.categoryRepository = categoryRepository;
     }
 
+    @Override
     public Product getSingleProduct(Long id){
         Optional<Product> optionalProduct = productRepository.findById(id);
         if(optionalProduct.isEmpty()){
@@ -31,14 +35,18 @@ public class SelfProductService implements ProductService{
         return optionalProduct.get();
     }
 
-    public List<Product> getAllProducts(){
-        List<Product> products = productRepository.findAll();
+    @Override
+    public Page<Product> getAllProducts(int pageNumber, int pageSize){
+        Page<Product> products = productRepository.findAll(
+                PageRequest.of(pageNumber, pageSize, Sort.by("price").ascending())
+        );
         if(products.isEmpty()){
             throw new ProductNotFoundException("No products found", null);
         }
         return products;
     }
 
+    @Override
     public Product createProduct(Product product) {
         if (product.getCategory() == null) {
             throw new RuntimeException("Category cannot be null");

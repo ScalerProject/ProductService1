@@ -4,6 +4,8 @@ import com.scaler.productservicedec24.dtos.FakeStoreProductDto;
 import com.scaler.productservicedec24.exceptions.ProductNotFoundException;
 import com.scaler.productservicedec24.models.Category;
 import com.scaler.productservicedec24.models.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -28,7 +30,7 @@ public class FakeStoreProductService implements ProductService{
     }
 
     @Override
-    public List<Product> getAllProducts(){
+    public Page<Product> getAllProducts(int pageNumber, int pageSize){
 ////      We can't use this because of type erasures of Generics
 //        List<FakeStoreProductDto> fakeStoreProductDtos = restTemplate
 //                .getForObject("https://fakestoreapi.com/products", List<FakeStoreProductDto>.class);
@@ -39,7 +41,7 @@ public class FakeStoreProductService implements ProductService{
         for(FakeStoreProductDto fakeStoreProductDto : fakeStoreProductDtos){
             products.add(convertFakeStoreProductDtoToProduct(fakeStoreProductDto));
         }
-        return products;
+        return new PageImpl<>(products);
     }
 
     public Product createProduct(Product product){

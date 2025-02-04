@@ -3,6 +3,7 @@ package com.scaler.productservicedec24.controllers;
 import com.scaler.productservicedec24.models.Product;
 import com.scaler.productservicedec24.services.ProductService;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,9 +48,10 @@ public class ProductController {
     }
 
     @GetMapping()
-    public ResponseEntity<List<Product>> getAllProducts() {
+    public ResponseEntity<Page<Product>> getAllProducts(@RequestParam(value = "pageNumber", defaultValue = "0") int pageNumber,
+                                                        @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
         return new ResponseEntity<>(
-                productService.getAllProducts(),
+                productService.getAllProducts(pageNumber, pageSize),
                 HttpStatus.OK
         );
     }
