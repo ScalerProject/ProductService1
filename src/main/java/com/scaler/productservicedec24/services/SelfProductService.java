@@ -9,8 +9,10 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Optional;
 
 @Service("selfProductService")
@@ -18,19 +20,32 @@ import java.util.Optional;
 public class SelfProductService implements ProductService{
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final RedisTemplate redisTemplate;
 
-    public SelfProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
+    public SelfProductService(ProductRepository productRepository, CategoryRepository categoryRepository, RedisTemplate redisTemplate) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     public Product getSingleProduct(Long id){
+        // Try to get the product from Redis cache
+        Product product = (Product) redisTemplate.opsForHash().get("PRODUCTS", "product_" + id);
+        if(product != null){
+            return product;
+        }
+        // If not found in cache, fetch from DB
         Optional<Product> optionalProduct = productRepository.findById(id);
         if(optionalProduct.isEmpty()){
             throw new ProductNotFoundException("Product not found", id);
         }
-        return optionalProduct.get();
+        product = optionalProduct.get();
+        // Store in Redis cache for future requests
+        redisTemplate.opsForHash().put("PRODUCTS", "product_" + id, product);
+        // Set TTL for the PRODUCTS hash (1 hour)
+        redisTemplate.expire("PRODUCTS", Duration.ofHours(1));
+        return product;
     }
 
     @Override
@@ -69,13 +84,54 @@ public class SelfProductService implements ProductService{
         }
         return productRepository.save(product);
     }
+
+    @Override
     public void deleteProduct(Long id){
-        return;
+        // Remove from DB
+        Optional<Product> optionalProduct = productRepository.findById(id);
+        if(optionalProduct.isEmpty()){
+            throw new ProductNotFoundException("Product not found", id);
+        }
+        productRepository.delete(optionalProduct.get());
+        // Remove from cache
+        redisTemplate.opsForHash().delete("PRODUCTS", "product_" + id);
     }
+
+    @Override
     public Product updateProduct(Long id, Product product){
-        return null;
+        Optional<Product> optionalProduct = productRepository.findById(id);
+        if(optionalProduct.isEmpty()){
+            throw new ProductNotFoundException("Product not found", id);
+        }
+        Product existingProduct = optionalProduct.get();
+        // Update only non-null fields
+        if(product.getTitle() != null) existingProduct.setTitle(product.getTitle());
+        if(product.getDescription() != null) existingProduct.setDescription(product.getDescription());
+        if(product.getPrice() != null) existingProduct.setPrice(product.getPrice());
+        if(product.getImageUrl() != null) existingProduct.setImageUrl(product.getImageUrl());
+        if(product.getCategory() != null) existingProduct.setCategory(product.getCategory());
+        Product updatedProduct = productRepository.save(existingProduct);
+        // Remove from cache so next get will refresh
+        redisTemplate.opsForHash().delete("PRODUCTS", "product_" + id);
+        return updatedProduct;
     }
+
+    @Override
     public Product replaceProduct(Long id, Product product){
-        return null;
+        Optional<Product> optionalProduct = productRepository.findById(id);
+        if(optionalProduct.isEmpty()){
+            throw new ProductNotFoundException("Product not found", id);
+        }
+        Product existingProduct = optionalProduct.get();
+        // Replace all fields
+        existingProduct.setTitle(product.getTitle());
+        existingProduct.setDescription(product.getDescription());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setImageUrl(product.getImageUrl());
+        existingProduct.setCategory(product.getCategory());
+        Product replacedProduct = productRepository.save(existingProduct);
+        // Remove from cache so next get will refresh
+        redisTemplate.opsForHash().delete("PRODUCTS", "product_" + id);
+        return replacedProduct;
     }
 }
